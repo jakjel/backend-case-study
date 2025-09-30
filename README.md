@@ -77,7 +77,7 @@ npm run start
 ```
 
 ### Swagger
-Najdete na: localhost:3000/api
+Najdete na: http://localhost:3000/api
 
 
 ### Osobní feedback
