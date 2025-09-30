@@ -1,6 +1,3 @@
-Issue with faker/faker-js and jest
-https://github.com/faker-js/faker/issues/3606
-
 # 🧰 NestJS Backend Case Study
 Backend case study pro NFCtron | NestJS
 
@@ -79,8 +76,15 @@ npm run test:e2e
 npm run start
 ```
 
+### Swagger
+Najdete na: localhost:3000/api
+
+
 ### Osobní feedback
-Nest mi přijde jako moc fajn framework. Používal jsem ho poprvé a musím říct, že má parádní dokumentaci. Měl jsem možnost pracovat s Nuxt.js a v podstatě to bylo skoro stejné.
+Nest mi přijde jako moc fajn framework. Používal jsem ho poprvé a musím říct, že má parádní dokumentaci. Měl jsem možnost pracovat s Nuxt.js a v podstatě to bylo skoro stejné. Během procesu jsem měl problém s faker/faker-js a jest poslední verzí, takže používám v7.
+
+Našel jsem tohle issue:
+https://github.com/faker-js/faker/issues/3606
 
 V brach "database" si chci přidat databázi a vše dát do docker-compose. 
 Všechno jsem napsal sám, s testy jsem si nechal pomoct ChatemGPT. Testy jsou oblast, ve které bych se chtěl zlepšit.
