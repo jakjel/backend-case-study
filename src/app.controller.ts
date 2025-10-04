@@ -26,7 +26,6 @@ export class AppController {
   @Post()
   @ApiOperation({ summary: 'Create a new customer' })
   async createCustomer(@Body() customerDTO: CreateCustomerDTO): Promise<CustomerResponseDTO> {
-    console.log('Created customer(Controller layer) - CreateCustomerDTO:', customerDTO); // DEBUG
     return this.applicationService.createCustomer(customerDTO);
   }
 
@@ -34,7 +33,6 @@ export class AppController {
   @HttpCode(201)
   @ApiOperation({ summary: 'Update an existing customer' })
   async update(@Param('id') id: string, @Body() newCustomerDTO: UpdateCustomerDTO): Promise<CustomerResponseDTO> {
-    console.log('Received partial customer (Controller layer) - UpdateCustomerDTO:', newCustomerDTO); // DEBUG
     return this.applicationService.updateCustomer(id, newCustomerDTO);
   }
 }
