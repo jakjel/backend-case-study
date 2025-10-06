@@ -3,7 +3,7 @@ import { Customer } from '../model/customer';
 import { faker } from '@faker-js/faker'; // Decided to use v7 since: https://github.com/faker-js/faker/issues/3606
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, DeepPartial, Repository } from 'typeorm';
-import { Subscription } from 'src/model/subscription';
+import { Subscription } from '../model/subscription';
 
 @Injectable()
 export class DataService implements OnModuleInit {
@@ -56,16 +56,6 @@ export class DataService implements OnModuleInit {
       throw new InternalServerErrorException('Failed to get customer by ID', error.message); // není to good practice, mel bych mit custom exception handler
     }
   }
-
-  // async updateCustomer(id: string, patch: Partial<Customer>) {
-  //   try {
-  //   await this.repo.update({ userId: id }, patch);
-  //   // await this.repo.update({ id: id }, patch);  // Tohle musim upravit, protoze TypeORM 0.3.x uz nepodporuje update podle primarniho klice, je potreba oddelit subscription od customer
-  //   return this.repo.findOneBy({ userId: id });
-  //   } catch (error) {
-  //     throw new InternalServerErrorException('Failed to update customer', error.message); // není to good practice, mel bych mit custom exception handler
-  //   }
-  // }
 
   async updateCustomer(id: string, patch: DeepPartial<Customer>) {
     try {
