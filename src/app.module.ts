@@ -3,13 +3,14 @@ import { AppController } from './app.controller';
 import { DataModule } from './data/data.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Customer } from './model/customer';
+import { Subscription } from './model/subscription';
 
 @Module({
 
   imports: [DataModule, TypeOrmModule.forRoot({
     type: 'postgres',
     url: process.env.DATABASE_URL,
-    entities: [Customer],
+    entities: [Customer, Subscription],
     autoLoadEntities: true,
     synchronize: true,
     retryAttempts: 10,

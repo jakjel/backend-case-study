@@ -1,6 +1,6 @@
-
 // customer.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
+import { Subscription } from './subscription';
 
 export class CustomerResponseDTO {
     @ApiProperty()
@@ -19,4 +19,6 @@ export class CustomerResponseDTO {
     lastName: string;
     @ApiProperty()
     registeredAt: Date;
+    @ApiProperty()
+    subscription: Subscription | undefined;
 }
