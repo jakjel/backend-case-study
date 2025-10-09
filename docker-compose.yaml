@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: nfctron-backend-case-study:latest
+    image: md-backend:latest
     env_file: .env
     ports:
       - "${PORT}:3000"

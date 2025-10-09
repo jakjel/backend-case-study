@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AppController } from './app.controller';
-import { ApplicationService } from './data/data.application.service';
+import { AppController } from './use-cases/tenant-use-case/tenant.app.controller';
+import { ApplicationService } from './use-cases/tenant-use-case/tenant.data.application.service';
 import { CreateCustomerDTO } from './model/customer-create.dto';
 import { UpdateCustomerDTO } from './model/customer-update.dto';
 import { CustomerResponseDTO } from './model/customer-response.dto';

@@ -1,21 +1,29 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { DataModule } from './data/data.module';
+import { TenantController } from './use-cases/tenant-use-case/tenant.app.controller';
+import { TenantDataModule } from './use-cases/tenant-use-case/tenant.data.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Customer } from './model/customer';
-import { Subscription } from './model/subscription';
+import { Subscription } from './model/entities/subscription';
+import { Tenant } from './model/entities/tenant';
+import { Payment } from './model/entities/payment';
+import { HousingUnit } from './model/entities/housing-unit';
+import { ResidentialComplex } from './model/entities/residential-complex';
+import { Device } from './model/entities/device';
+import { Log } from './model/entities/log';
+import { Energy } from './model/entities/energy';
+import { SubscriptionController } from './use-cases/subscription-use-case/subscription.app.controller';
+import { SubscriptionDataModule } from './use-cases/subscription-use-case/subscription.data.module';
 
 @Module({
-
-  imports: [DataModule, TypeOrmModule.forRoot({
+  imports: [SubscriptionDataModule, TenantDataModule, TypeOrmModule.forRoot({
     type: 'postgres',
     url: process.env.DATABASE_URL,
-    entities: [Customer, Subscription],
+    entities: [Tenant, Subscription, Payment, HousingUnit, ResidentialComplex, Device, Log, Energy],
     autoLoadEntities: true,
     synchronize: true,
     retryAttempts: 10,
     retryDelay: 3000,
-  }),],
-  controllers: [AppController],
+  }),
+  ],
+  controllers: [TenantController, SubscriptionController],
 })
 export class AppModule { }

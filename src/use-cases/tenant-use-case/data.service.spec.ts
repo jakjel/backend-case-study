@@ -1,17 +1,16 @@
-import { DataService } from './data.service';
+import { TenantDataService } from './tenant.data.service';
 import { Customer } from '../model/customer';
 import { DataSource, Repository } from 'typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Subscription } from '../model/subscription';
-import { InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import { InternalServerErrorException } from '@nestjs/common';
 
 describe('DataService (repo mocked incl. Subscription; service unchanged)', () => {
-  let service: DataService;
+  let service: TenantDataService;
 
   
   let customerRepo: jest.Mocked<Repository<Customer>>;
-  // Type hints for DI retrieval (they’re mocks)
   let subscriptionRepo: jest.Mocked<Repository<Subscription>>;
   let dataSource: jest.Mocked<DataSource>;
   
@@ -125,14 +124,14 @@ describe('DataService (repo mocked incl. Subscription; service unchanged)', () =
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        DataService,
+        TenantDataService,
         { provide: getRepositoryToken(Customer), useValue: customerRepoMock },
         { provide: getRepositoryToken(Subscription), useValue: subRepoMock },
         { provide: DataSource, useValue: dsMock },
       ],
     }).compile();
 
-    service = module.get<DataService>(DataService);
+    service = module.get<TenantDataService>(TenantDataService);
     customerRepo = module.get(getRepositoryToken(Customer));
     subscriptionRepo = module.get(getRepositoryToken(Subscription));
     dataSource = module.get(DataSource);
