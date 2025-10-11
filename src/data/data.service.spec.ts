@@ -1,64 +1,25 @@
+import { NotFoundException } from '@nestjs/common';
 import { DataService } from './data.service';
 import { Customer } from '../model/customer';
+import { faker } from '@faker-js/faker';
 import { Repository } from 'typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 
-describe('DataService (repo mocked, service unchanged)', () => {
+describe('DataService (with mocked Faker)', () => {
   let service: DataService;
   let repo: jest.Mocked<Repository<Customer>>;
-  let store: Customer[];
+
 
   beforeEach(async () => {
     jest.useFakeTimers().setSystemTime(new Date('2025-01-01T12:00:00Z'));
     jest.clearAllMocks();
 
-    store = [];
-
-    // TypeORM-like behavior (enough for these tests)
     const repoMock: Partial<jest.Mocked<Repository<Customer>>> = {
-      count: jest.fn().mockImplementation(async () => store.length),
-
-      create: jest.fn().mockImplementation((dto: Partial<Customer>) => new Customer(dto)),
-
-      find: jest.fn().mockImplementation(async () => [...store]),
-
-      findOneBy: jest.fn().mockImplementation(async (where: Partial<Customer>) => {
-        const id = (where as any)?.userId;
-        return store.find(s => s.userId === id) ?? null;
-      }),
-
-      save: jest.fn().mockImplementation(async (input: any) => {
-        const saveOne = (c: Customer | Partial<Customer>) => {
-          const entity = c instanceof Customer ? c : new Customer(c);
-          // upsert by userId if present, else push new
-          const idx = entity.userId ? store.findIndex(s => s.userId === entity.userId) : -1;
-          if (idx >= 0) {
-            store[idx] = { ...store[idx], ...entity };
-            return store[idx];
-          }
-          store.push(entity as Customer);
-          return entity as Customer;
-        };
-
-        if (Array.isArray(input)) {
-          return input.map(saveOne);
-        }
-        return saveOne(input);
-      }),
-
-      update: jest.fn().mockImplementation(async (where: Partial<Customer>, patch: Partial<Customer>) => {
-        const id = (where as any)?.userId;
-        const idx = store.findIndex(s => s.userId === id);
-        if (idx < 0) return { affected: 0 } as any;
-
-        // mimic TypeORM: skip undefined fields, apply defined (including empty string, null)
-        const definedEntries = Object.entries(patch).filter(([, v]) => v !== undefined);
-        const filteredPatch = Object.fromEntries(definedEntries) as Partial<Customer>;
-
-        store[idx] = { ...store[idx], ...filteredPatch };
-        return { affected: 1 } as any;
-      }),
+      find: jest.fn(),
+      save: jest.fn(),
+      update: jest.fn(),
+      findOneBy: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -71,8 +32,8 @@ describe('DataService (repo mocked, service unchanged)', () => {
     service = module.get<DataService>(DataService);
     repo = module.get(getRepositoryToken(Customer));
 
-    // trigger seeding path in onModuleInit (count()==0)
     await module.init();
+
   });
 
   afterEach(() => {
@@ -81,98 +42,148 @@ describe('DataService (repo mocked, service unchanged)', () => {
     jest.clearAllMocks();
   });
 
-  describe('onModuleInit – generic seeding', () => {
-    it('seeds exactly 5 customers when repo is empty', async () => {
-      // after module.init(), our repoMock.save should have been called if count()===0
-      expect(repo.count).toHaveBeenCalled();
-      expect(store.length).toBe(5);
-      const all = await service.fetchAll();
-      expect(all).toHaveLength(5);
-    });
+  describe('createRandomUser (private) – mocked Faker', () => {
+    it('builds a deterministic Customer from faker fields', () => {
+      // Arrange (Faker v7 API)
+      const uuidSpy = jest.spyOn(faker.datatype, 'uuid').mockReturnValue('uuid-123');
+      const userNameSpy = jest.spyOn(faker.internet, 'userName').mockReturnValue('johnny');
+      const emailSpy = jest.spyOn(faker.internet, 'email').mockReturnValue('johnny@example.com');
+      const avatarSpy = jest.spyOn(faker.image, 'avatar').mockReturnValue('https://img/avatar.png');
+      const passwordSpy = jest.spyOn(faker.internet, 'password').mockReturnValue('S3cr3t!');
+      const datePastSpy = jest
+        .spyOn(faker.date, 'past')
+        .mockReturnValueOnce(new Date('1992-05-05T00:00:00Z'))  // birthday
+        .mockReturnValueOnce(new Date('2025-03-10T00:00:00Z')); // registeredAt
+      const firstSpy = jest.spyOn(faker.name, 'firstName').mockReturnValue('John');
+      const lastSpy = jest.spyOn(faker.name, 'lastName').mockReturnValue('Doe');
 
-    it('does NOT reseed if customers already exist', async () => {
-      // simulate a second init
-      await (service as any).onModuleInit();
-      // still 5
-      expect(store.length).toBe(5);
+      const created: Customer = (service as any).createRandomUser();
+
+      // Assert
+      expect(created).toBeInstanceOf(Customer);
+      expect(created.userId).toBe('uuid-123');
+      expect(created.username).toBe('johnny');
+      expect(created.email).toBe('johnny@example.com');
+      expect(created.avatar).toBe('https://img/avatar.png');
+      expect(created.password).toBe('S3cr3t!');
+      expect(created.firstName).toBe('John');
+      expect(created.lastName).toBe('Doe');
+      expect(created.birthday.toISOString()).toBe('1992-05-05T00:00:00.000Z');
+      expect(created.registeredAt.toISOString()).toBe('2025-03-10T00:00:00.000Z');
+
+      expect(uuidSpy).toHaveBeenCalledTimes(1);
+      expect(userNameSpy).toHaveBeenCalledTimes(1);
+      expect(emailSpy).toHaveBeenCalledTimes(1);
+      expect(avatarSpy).toHaveBeenCalledTimes(1);
+      expect(passwordSpy).toHaveBeenCalledTimes(1);
+      expect(datePastSpy).toHaveBeenCalledTimes(2);
+      expect(firstSpy).toHaveBeenCalledTimes(1);
+      expect(lastSpy).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('createCustomer – passes through to repo.save (no uuid/now added by service)', () => {
-    it('saves the provided fields and returns the saved entity', async () => {
+  describe('onModuleInit – spy na private createRandomUser', () => {
+    it('pushne přesně 5 customers', async () => {
+      const fixtures: Customer[] = Array.from({ length: 5 }, (_, i) =>
+        new Customer({
+          userId: `id-${i + 1}`,
+          username: `u${i + 1}`,
+          email: `u${i + 1}@ex.com`,
+          avatar: `https://avatar/${i + 1}.png`,
+          password: 'x',
+          birthday: new Date(`1990-01-0${(i % 9) + 1}T00:00:00Z`),
+          registeredAt: new Date(`2025-01-0${(i % 9) + 1}T00:00:00Z`),
+          firstName: `F${i + 1}`,
+          lastName: `L${i + 1}`,
+        }),
+      );
+
+      const svcAny = service as any;
+      const spy = jest
+        .spyOn(svcAny, 'createRandomUser')
+        .mockReturnValueOnce(fixtures[0])
+        .mockReturnValueOnce(fixtures[1])
+        .mockReturnValueOnce(fixtures[2])
+        .mockReturnValueOnce(fixtures[3])
+        .mockReturnValueOnce(fixtures[4]);
+
+      await service.onModuleInit();
+
+      const all = await service.fetchAll();
+      expect(all).toHaveLength(5);
+      expect(all).toEqual(fixtures);
+      expect(spy).toHaveBeenCalledTimes(5);
+    });
+  });
+
+  describe('createCustomer – deterministic id', () => {
+    it('assigns mocked uuid and current registeredAt', async () => {
+      jest.spyOn(faker.datatype, 'uuid').mockReturnValue('const-uuid-0001');
+
       const created = await service.createCustomer({
-        userId: 'manual-1',
         username: 'alice',
         email: 'alice@example.com',
         firstName: 'Alice',
         lastName: 'A.',
       });
 
-      expect(created).toBeDefined();
-      expect(created.userId).toBe('manual-1'); // service does NOT generate id
+      expect(created.userId).toBe('const-uuid-0001');
+      expect(created.registeredAt.toISOString()).toBe('2025-01-01T12:00:00.000Z');
       expect(created.username).toBe('alice');
       expect(created.email).toBe('alice@example.com');
-
-      const all = await service.fetchAll();
-      // there were 5 seeded + this one
-      expect(all).toHaveLength(6);
-      expect(all.find(c => c.userId === 'manual-1')).toBeTruthy();
     });
   });
 
-  describe('getById / updateCustomer – behavior with current service', () => {
-    it('getById returns the created record', async () => {
-      // create and then get
-      await service.createCustomer({ userId: 'id-xyz', username: 'john', email: 'john_doe@gmail.com' });
+  describe('getById / updateCustomer – business logika', () => {
+    it('getById vrátí vytvořený záznam', async () => {
+      jest.spyOn(faker.datatype, 'uuid').mockReturnValue('id-xyz');
+      const c = await service.createCustomer({ username: 'john', email: 'john_doe@gmail.com' });
 
-      const found = await service.getById('id-xyz'); // current service returns entity or null (no NotFoundException)
+      const found = await service.getById('id-xyz');
       expect(found).toBeDefined();
-      expect(found?.userId).toBe('id-xyz');
-      expect(found?.email).toBe('john_doe@gmail.com');
+      if (found) {
+        expect(found.userId).toBe(c.userId);
+        expect(found.email).toBe('john_doe@gmail.com');
+      }
     });
 
-    it('getById returns null for non-existing id (no NotFoundException thrown)', async () => {
-      const found = await service.getById('missing');
-      expect(found).toBeNull();
+    it('getById vyhodí NotFound pro neexistující id', async () => {
+      await expect(service.getById('missing')).rejects.toBeInstanceOf(NotFoundException);
     });
 
-    it('updateCustomer updates only defined fields (keeps registeredAt by default)', async () => {
-      // seed one with registeredAt
-      const initial = await service.createCustomer({
-        userId: 'id-1',
+    it('updateCustomer updatuje jen nenedefinované fieldy', async () => {
+      jest.spyOn(faker.datatype, 'uuid').mockReturnValue('id-1');
+      const c = await service.createCustomer({
         username: 'john',
         email: 'john_doe@gmail.com',
         firstName: 'John',
         lastName: 'Doe',
         avatar: 'https://a/1.png',
-        registeredAt: new Date('2024-12-31T00:00:00Z'),
       });
 
-      const originalRegisteredAt = initial.registeredAt;
+      const originalRegisteredAt = c.registeredAt;
 
-      // undefined fields should be ignored; empty string applied
-      await service.updateCustomer('id-1', {
+      const updated = await service.updateCustomer('id-1', {
         firstName: 'John',
         lastName: undefined,
         avatar: '',
       });
 
-      const updated = await service.getById('id-1');
       expect(updated).not.toBeNull();
-      expect(updated!.userId).toBe('id-1');
-      expect(updated!.registeredAt?.toISOString()).toBe(originalRegisteredAt?.toISOString());
+      if (updated) {
+        expect(updated.userId).toBe('id-1');
+        expect(updated.registeredAt).toEqual(originalRegisteredAt);
 
-      expect(updated!.firstName).toBe('John');
-      // lastName unchanged because undefined was ignored by our mock (mimic TypeORM)
-      expect(updated!.lastName).toBe('Doe');
-      expect(updated!.avatar).toBe('');
-      expect(updated!.email).toBe('john_doe@gmail.com');
+        expect(updated.firstName).toBe('John');
+        expect(updated.lastName).toBe('Doe');
+        expect(updated.avatar).toBe('');
+        expect(updated.email).toBe('john_doe@gmail.com');
+      }
     });
 
-    it('updateCustomer returns null for non-existing id (service does not throw)', async () => {
-      const result = await service.updateCustomer('nope', { firstName: 'X' });
-      expect(result).toBeNull();
+    it('updateCustomer vyhodí NotFound pro neexistující id', async () => {
+      await expect(service.updateCustomer('nope', { firstName: 'X' }))
+        .rejects.toBeInstanceOf(NotFoundException);
     });
   });
 });
-
