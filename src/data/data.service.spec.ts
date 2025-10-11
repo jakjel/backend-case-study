@@ -2,38 +2,14 @@ import { NotFoundException } from '@nestjs/common';
 import { DataService } from './data.service';
 import { Customer } from '../model/customer';
 import { faker } from '@faker-js/faker';
-import { Repository } from 'typeorm';
-import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
 
 describe('DataService (with mocked Faker)', () => {
   let service: DataService;
-  let repo: jest.Mocked<Repository<Customer>>;
 
-
-  beforeEach(async () => {
+  beforeEach(() => {
     jest.useFakeTimers().setSystemTime(new Date('2025-01-01T12:00:00Z'));
     jest.clearAllMocks();
-
-    const repoMock: Partial<jest.Mocked<Repository<Customer>>> = {
-      find: jest.fn(),
-      save: jest.fn(),
-      update: jest.fn(),
-      findOneBy: jest.fn(),
-    };
-
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        DataService,
-        { provide: getRepositoryToken(Customer), useValue: repoMock },
-      ],
-    }).compile();
-
-    service = module.get<DataService>(DataService);
-    repo = module.get(getRepositoryToken(Customer));
-
-    await module.init();
-
+    service = new DataService();
   });
 
   afterEach(() => {
@@ -128,7 +104,7 @@ describe('DataService (with mocked Faker)', () => {
       });
 
       expect(created.userId).toBe('const-uuid-0001');
-      expect(created.registeredAt.toISOString()).toBe('2025-01-01T12:00:00.000Z');
+      expect(created.registeredAt.toISOString()).toBe('2025-01-01T12:00:00.000Z'); 
       expect(created.username).toBe('alice');
       expect(created.email).toBe('alice@example.com');
     });
@@ -141,10 +117,8 @@ describe('DataService (with mocked Faker)', () => {
 
       const found = await service.getById('id-xyz');
       expect(found).toBeDefined();
-      if (found) {
-        expect(found.userId).toBe(c.userId);
-        expect(found.email).toBe('john_doe@gmail.com');
-      }
+      expect(found.userId).toBe(c.userId);
+      expect(found.email).toBe('john_doe@gmail.com');
     });
 
     it('getById vyhodí NotFound pro neexistující id', async () => {
@@ -164,21 +138,18 @@ describe('DataService (with mocked Faker)', () => {
       const originalRegisteredAt = c.registeredAt;
 
       const updated = await service.updateCustomer('id-1', {
-        firstName: 'John',
-        lastName: undefined,
-        avatar: '',
+        firstName: 'John',   // změna (stejná hodnota, ale logika ji zapíše)
+        lastName: undefined, // ignorovat
+        avatar: '',          // prázdný string přepíše na ''
       });
 
-      expect(updated).not.toBeNull();
-      if (updated) {
-        expect(updated.userId).toBe('id-1');
-        expect(updated.registeredAt).toEqual(originalRegisteredAt);
+      expect(updated.userId).toBe('id-1');
+      expect(updated.registeredAt).toEqual(originalRegisteredAt);
 
-        expect(updated.firstName).toBe('John');
-        expect(updated.lastName).toBe('Doe');
-        expect(updated.avatar).toBe('');
-        expect(updated.email).toBe('john_doe@gmail.com');
-      }
+      expect(updated.firstName).toBe('John');           // změněno
+      expect(updated.lastName).toBe('Doe');             // nezměněno (undefined ignorováno)
+      expect(updated.avatar).toBe('');                  // přepsáno na ''
+      expect(updated.email).toBe('john_doe@gmail.com'); // nezměněno
     });
 
     it('updateCustomer vyhodí NotFound pro neexistující id', async () => {

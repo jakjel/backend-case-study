@@ -26,7 +26,6 @@ export class AppController {
   @Post()
   @ApiOperation({ summary: 'Create a new customer' })
   async createCustomer(@Body() customerDTO: CreateCustomerDTO): Promise<CustomerResponseDTO> {
-    console.log('Created customer(Controller layer) - CreateCustomerDTO:', customerDTO); // DEBUG
     return this.applicationService.createCustomer(customerDTO);
   }
 

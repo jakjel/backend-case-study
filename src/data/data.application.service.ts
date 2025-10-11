@@ -1,9 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { DataService } from './data.service';
 import { UpdateCustomerDTO } from '../model/customer-update.dto';
 import { CustomerResponseDTO } from '../model/customer-response.dto';
 import { CustomerMapper } from '../model/mapper/customer.mapper';
-import { CreateCustomerDTO } from 'src/model/customer-create.dto';
 
 @Injectable()
 export class ApplicationService {
@@ -16,24 +15,28 @@ export class ApplicationService {
 
     async getById(id: string): Promise<CustomerResponseDTO> {
         const customer = await this.customerService.getById(id);
-        if (customer != null) {
-            return CustomerMapper.toResponseDTO(customer);
-        }
-        throw new BadRequestException('Bad request'); // Should be better error handling
+        return CustomerMapper.toResponseDTO(customer);
     }
 
     async updateCustomer(id: string, newCustomerDTO: UpdateCustomerDTO): Promise<CustomerResponseDTO> {
+        console.log('Received partial customer (Application layer) - UpdateCustomerDTO:', newCustomerDTO); // DEBUG
+
         const customerDomain = CustomerMapper.toDomain(newCustomerDTO);
+
+        console.log('Received partial customer (Application layer) - Customer:', customerDomain); // DEBUG
+
         const updatedCustomer = await this.customerService.updateCustomer(id, customerDomain);
-        if (updatedCustomer != null) {
-            return CustomerMapper.toResponseDTO(updatedCustomer!);
-        }
-        throw new BadRequestException('Bad request'); // Should be better error handling
+
+        console.log('Received partial customer (Application layer) - Customer:', updatedCustomer); // DEBUG
+
+        return CustomerMapper.toResponseDTO(updatedCustomer);
     }
 
-    async createCustomer(newCustomerDTO: CreateCustomerDTO): Promise<CustomerResponseDTO> {
-        const customerDomain = CustomerMapper.toDomainCreate(newCustomerDTO);
+    async createCustomer(newCustomerDTO: UpdateCustomerDTO): Promise<CustomerResponseDTO> {
+        const customerDomain = CustomerMapper.toDomain(newCustomerDTO);
+
         const updatedCustomer = await this.customerService.createCustomer(customerDomain);
+
         return CustomerMapper.toResponseDTO(updatedCustomer);
     }
 
