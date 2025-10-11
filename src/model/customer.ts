@@ -1,10 +1,7 @@
 import {
   Entity, Column, PrimaryGeneratedColumn, CreateDateColumn,
-  Index,
-  OneToOne,
-  JoinColumn
+  Index
 } from 'typeorm';
-import { Subscription } from './subscription';
 
 @Entity('customers')
 export class Customer {
@@ -36,14 +33,6 @@ export class Customer {
 
   @CreateDateColumn()
   registeredAt: Date;
-
-  @OneToOne(() => Subscription, (s) => s.customer, {
-    nullable: true,
-    cascade: ['insert', 'update'],
-    eager: true, 
-  })
-  @JoinColumn({ name: 'subscriptionId' })
-  subscription: Subscription | null;
 
   constructor(data?: Partial<Customer>) {
     Object.assign(this, data);

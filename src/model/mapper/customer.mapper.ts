@@ -16,8 +16,7 @@ export class CustomerMapper {
             birthday: customer.birthday,
             firstName: customer.firstName,
             lastName: customer.lastName,
-            registeredAt: customer.registeredAt,
-            subscription: customer.subscription ?? undefined,
+            registeredAt: customer.registeredAt
         };
     }
 
@@ -36,7 +35,6 @@ export class CustomerMapper {
             birthday: dto.birthday,
             firstName: dto.firstName,
             lastName: dto.lastName,
-            subscription: dto.subscription
         }
     }
 
@@ -47,8 +45,7 @@ export class CustomerMapper {
             avatar: dto.avatar,
             birthday: dto.birthday,
             firstName: dto.firstName,
-            lastName: dto.lastName,
-            subscription: dto.subscription
+            lastName: dto.lastName
         };
     }
 }

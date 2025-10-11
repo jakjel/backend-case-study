@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { Subscription } from './subscription';
 
 export class UpdateCustomerDTO {
     @ApiProperty()
@@ -42,7 +41,4 @@ export class UpdateCustomerDTO {
         return trimmed.length > 0 ? trimmed : undefined;
     }) 
     lastName: string;
-
-    @ApiProperty()
-    subscription: Subscription;
 }

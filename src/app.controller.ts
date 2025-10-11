@@ -26,10 +26,7 @@ export class AppController {
   @Post()
   @ApiOperation({ summary: 'Create a new customer' })
   async createCustomer(@Body() customerDTO: CreateCustomerDTO): Promise<CustomerResponseDTO> {
-    console.log('AppController - creating customer with subscription:', customerDTO);
-    const createdCustomer = this.applicationService.createCustomer(customerDTO); 
-    console.log('AppController - created customer:', createdCustomer);
-    return createdCustomer;
+    return this.applicationService.createCustomer(customerDTO);
   }
 
   @Put(':id')
