@@ -2,9 +2,9 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test as NestTest, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 
-import { AppController } from '../src/use-cases/tenant-use-case/tenant.app.controller';
-import { ApplicationService } from '../src/use-cases/tenant-use-case/tenant.data.application.service';
-import { TenantDataService } from '../src/use-cases/tenant-use-case/tenant.data.service';
+import { AppController } from '../src/app.controller';
+import { ApplicationService } from '../src/data/data.application.service';
+import { DataService } from '../src/data/data.service';
 import { UpdateCustomerDTO } from '../src/model/customer-update.dto';
 import { CreateCustomerDTO } from 'src/model/customer-create.dto';
 
@@ -18,7 +18,7 @@ describe('AppController (e2e) with real services', () => {
   beforeAll(async () => {
     const moduleRef: TestingModule = await NestTest.createTestingModule({
       controllers: [AppController],
-      providers: [ApplicationService, TenantDataService],
+      providers: [ApplicationService, DataService],
     }).compile();
 
     app = moduleRef.createNestApplication();
